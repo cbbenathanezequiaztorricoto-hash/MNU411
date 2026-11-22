@@ -1,0 +1,166 @@
+import os
+import streamlit as st
+from engine.no_lineales import NoLinealesEngine
+
+
+def render_tab_no_lineales():
+    st.header("Módulo 2: Ecuaciones No Lineales")
+
+    # Mapeo de métodos con sus respectivos GIFs en la carpeta media/
+    gif_map = {
+        "Método de Bisección": "media/biseccion.gif",
+        "Método de Regula Falsi (Posición Falsa)": "media/falsi.gif",
+        "Método de la Secante": "media/secante.gif",
+        "Newton-Raphson (1er Orden)": "media/newton.gif",
+        "Newton-Raphson (2do Orden)": "media/newton.gif",
+        "Método de Punto Fijo": "media/metodo26.gif",
+    }
+
+    # Selector del método numérico
+    metodo = st.selectbox(
+        "Seleccione el Método Numérico:",
+        list(gif_map.keys()),
+        key="sb_metodo_no_lineales",
+    )
+
+    st.markdown("---")
+
+    # Distribución en 2 Columnas (Columna Izquierda: Parámetros + GIF | Columna Derecha: GeoGebra + Resultados)
+    col_izq, col_der = st.columns([1, 1])
+
+    with col_izq:
+        st.subheader("1. Interpretación Geométrica")
+
+        # Cargar el GIF correspondiente si existe en la carpeta media/
+        gif_path = gif_map.get(metodo)
+        if gif_path and os.path.exists(gif_path):
+            st.image(
+                gif_path,
+                caption=f"Comportamiento dinámico: {metodo} (Créditos: @juliomulero)",
+                use_container_width=True,
+            )
+        else:
+            st.info("Animación conceptual no disponible para este método.")
+
+        st.markdown("---")
+        st.subheader("2. Parámetros de Entrada")
+
+        # Formulario según el método seleccionado
+        if metodo == "Método de Punto Fijo":
+            st.latex(r"x_{i+1} = g(x_i)")
+            func_str = st.text_input(
+                "Ingrese g(x):",
+                value="(x**2 - exp(x)) / 5",
+                key="input_g_pf",
+            )
+            x0 = st.number_input(
+                "Valor inicial (x₀):", value=0.0, format="%.4f", key="x0_pf"
+            )
+
+        elif metodo in [
+            "Método de Bisección",
+            "Método de Regula Falsi (Posición Falsa)",
+        ]:
+            func_str = st.text_input(
+                "Ingrese f(x):", value="x**3 - x - 2", key="input_f_bis"
+            )
+            c1, c2 = st.columns(2)
+            with c1:
+                val_a = st.number_input(
+                    "Extremo a:", value=1.0, format="%.4f", key="a_bis"
+                )
+            with c2:
+                val_b = st.number_input(
+                    "Extremo b:", value=2.0, format="%.4f", key="b_bis"
+                )
+
+        elif metodo == "Método de la Secante":
+            func_str = st.text_input(
+                "Ingrese f(x):",
+                value="x**2 - 5*x - exp(x)",
+                key="input_f_sec",
+            )
+            c1, c2 = st.columns(2)
+            with c1:
+                x_prev = st.number_input(
+                    "x_{n-1}:", value=0.0, format="%.4f", key="xprev_sec"
+                )
+            with c2:
+                x_curr = st.number_input(
+                    "x_n:", value=1.0, format="%.4f", key="xcurr_sec"
+                )
+
+        else:  # Newton-Raphson 1er y 2do Orden
+            func_str = st.text_input(
+                "Ingrese f(x):",
+                value="x**2 - 5*x - exp(x)",
+                key="input_f_newton",
+            )
+            x0 = st.number_input(
+                "Valor inicial (x₀):", value=0.0, format="%.4f", key="x0_newton"
+            )
+
+        col_tol, col_max = st.columns(2)
+        with col_tol:
+            tol = st.number_input(
+                "Tolerancia (E):",
+                value=0.001,
+                format="%.5f",
+                key="tol_nl",
+            )
+        with col_max:
+            max_iter = st.slider(
+                "Máx. iteraciones:",
+                min_value=1,
+                max_value=100,
+                value=30,
+                key="max_iter_nl",
+            )
+
+        btn_calcular = st.button(
+            "Ejecutar Cálculo", type="primary", key="btn_calc_nl"
+        )
+
+    with col_der:
+        st.subheader("3. Laboratorio Gráfico (GeoGebra)")
+        st.iframe("https://www.geogebra.org/classic", height=380)
+
+        if btn_calcular:
+            st.markdown("---")
+            try:
+                res = None
+                if metodo == "Método de Punto Fijo":
+                    res = NoLinealesEngine.punto_fijo(
+                        func_str, x0, tol, int(max_iter)
+                    )
+                elif metodo == "Método de Bisección":
+                    res = NoLinealesEngine.biseccion(
+                        func_str, val_a, val_b, tol, int(max_iter)
+                    )
+                elif metodo == "Método de Regula Falsi (Posición Falsa)":
+                    res = NoLinealesEngine.regula_falsi(
+                        func_str, val_a, val_b, tol, int(max_iter)
+                    )
+                elif metodo == "Método de la Secante":
+                    res = NoLinealesEngine.secante(
+                        func_str, x_prev, x_curr, tol, int(max_iter)
+                    )
+                elif metodo == "Newton-Raphson (1er Orden)":
+                    res = NoLinealesEngine.newton_raphson_1(
+                        func_str, x0, tol, int(max_iter)
+                    )
+                elif metodo == "Newton-Raphson (2do Orden)":
+                    res = NoLinealesEngine.newton_raphson_2(
+                        func_str, x0, tol, int(max_iter)
+                    )
+
+                if res and res["convergio"]:
+                    st.success(f"**Raíz hallada:** `{res['raiz']:.6f}`")
+                else:
+                    st.warning("No se alcanzó la convergencia en el límite de iteraciones.")
+
+                if res and "iteraciones" in res:
+                    st.dataframe(res["iteraciones"], use_container_width=True)
+
+            except Exception as e:
+                st.error(f"Error en el cálculo: {e}")

@@ -1,0 +1,81 @@
+========================================================================
+       INSTRUCCIONES DE INSTALACION Y EJECUCION: CALCULADORA MNU411
+========================================================================
+
+------------------------------------------------------------------------
+PASO 1: INSTALACION DE PYTHON (Solo si no lo tiene instalado)
+------------------------------------------------------------------------
+1. Ingrese a https://www.python.org/downloads/ y descargue la versión 
+   más reciente de Python.
+2. Ejecute el archivo instalador (.exe).
+3. [MUY IMPORTANTE] Antes de hacer clic en "Install Now", marque la 
+   casilla ubicada en la parte inferior:
+   
+   [X] Add python.exe to PATH
+
+------------------------------------------------------------------------
+PASO 2: UBICARSE EN LA CARPETA DEL PROYECTO
+------------------------------------------------------------------------
+1. Descomprima el RAR que se le mando preferiblemente en el escritorio
+2. Abra la terminal o consola de comandos (PowerShell, CMD o Símbolo 
+   del Sistema).
+3. Navegue hasta la carpeta del proyecto ejecutando:
+
+   cd Desktop/MNU411
+
+   (O si su sistema está en español):
+   cd Escritorio/MNU411
+
+------------------------------------------------------------------------
+PASO 3: INSTALACION DE DEPENDENCIAS (LIBRERIAS)
+------------------------------------------------------------------------
+Ejecute el siguiente comando en la consola para instalar todas las 
+librerías necesarias
+
+Para eso y lastimosamente el proyecto es estático en ese sentido.
+Debe crear un entorno para no instalar las librerías en su PATH global
+sino en un entorno, ejecute:
+
+python -m venv .venv   
+
+Una vez creado, entre a ese entorno:
+
+.venv\Scripts\Activate.ps1
+
+Ya una vez dentro el entorno instale las librerías:
+
+pip install -r requirements.txt
+
+Descripción de las librerías empleadas:
+- streamlit : Framework para la interfaz web interactiva.
+- sympy     : Motor de cálculo simbólico (equivalente a MATLAB) para
+              derivación e integración matemática.
+- numpy     : Álgebra matricial de alto rendimiento (para Gauss, 
+              Gauss-Jordan, Jacobi y Gauss-Seidel).
+- pandas    : Formateo y gestión de tablas de iteraciones.
+- reportlab : Generador automático de reportes académicos en formato PDF.
+
+------------------------------------------------------------------------
+PASO 4: EJECUCION DE LA APLICACION
+------------------------------------------------------------------------
+Una vez instaladas las librerías, ejecute el orquestador principal:
+
+   streamlit run app.py
+
+La aplicación se abrirá automáticamente en su navegador web predeterminado 
+en la dirección local: http://localhost:8501
+
+========================================================================
+RESUMEN DE EJECUCION RAPIDA (Si ya tiene Python y librerías instaladas)
+========================================================================
+1. Abra la terminal en la carpeta del proyecto:
+   cd MNU411 puede usar VS Code con su terminal en CRTL+MAYUS+Ñ y ejecutar todos los comando
+   o usar su cmd
+
+2. Ejecute todos los comandos para un funcionamiento sin errores
+
+------------------------------------------------------------------------
+PARA DETENER LA APLICACION:
+Regrese a la ventana de la terminal/consola y presione las teclas:
+Ctrl + C
+========================================================================

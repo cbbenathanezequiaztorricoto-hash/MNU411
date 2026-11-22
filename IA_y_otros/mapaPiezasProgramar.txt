@@ -1,0 +1,217 @@
+===============================================================================
+ ESPECIFICACIÓN Y MAPA DE PIEZAS A PROGRAMAR: SISTEMA DE MÉTODOS NUMÉRICOS
+===============================================================================
+Proyecto: Calculadora y Sistema Modular de Métodos Numéricos (MNU411)
+Enfoque de Desarrollo: Spec-Driven Development (Especificar, Diseñar, Dirigir, Revisar)
+
+-------------------------------------------------------------------------------
+1. VISIÓN GENERAL DE LA ARQUITECTURA
+-------------------------------------------------------------------------------
+Tecnologías Core:
+- Lenguaje: Python
+- Backend / Framework Web: Flask (o Streamlit para prototipado rápido)
+- Cálculo Simbólico / Numérico: SymPy, NumPy
+- Frontend / Componentes: HTML5 / Tailwind / Bootstrap, Jinja2, Modal GeoGebra (iframe)
+- Reportes: Generación e impresión PDF de tablas de iteración
+
+Estructura de Módulos Principal:
+[Módulo 1: Análisis de Errores]
+[Módulo 2: Ecuaciones No Lineales]
+[Módulo 3: Sistemas de Ecuaciones Lineales (SEL)]
+[Módulo 4: Visualización Gráfica y Exportación PDF]
+
+Pero se acordo que será:
+MNU411_App/
+│
+├── engine/  # MOTOR MATEMÁTICO PURO (100% reutilizable en Flask)
+│   ├── __init__.py
+│   ├── errores.py # Pieza 1: Módulo de Errores
+│   ├── no_lineales.py 
+│   │       # ☝Pieza 2: Punto Fijo, Bisección, Secante, Newton
+│   ├── sistemas_lineales.py
+│   └──     # ☝Pieza 3: Gauss, Gauss-Jordan, Jacobi, Gauss-Seidel
+│
+├── ui/                  # CAPA DE PRESENTACIÓN (Streamlit)
+│   ├── tab_errores.py
+│   ├── tab_no_lineales.py
+│   └── tab_sistemas.py
+│
+└── app.py                       # Orquestador Principal
+
+Se tiene pensando hacer el engine de esta manera para poder agregar más métodos en un futuro
+
+===============================================================================
+2. MAPA DETALLADO DE PIEZAS / ALGORITMOS A PROGRAMAR
+===============================================================================
+
+-------------------------------------------------------------------------------
+MÓDULO 1: ANÁLISIS DE ERRORES (Existente / A mantener)
+-------------------------------------------------------------------------------
+- Error Absoluto, Relativo y Porcentual
+- Error de Redondeo y Cota Teórica (1/2 * 10^-d)
+- Error de Truncamiento con Serie de Taylor (Polinomio P_d(x))
+- Propagación de Error en Funciones Multivariable (Derivadas Parciales)
+
+-------------------------------------------------------------------------------
+MÓDULO 2: ECUACIONES NO LINEALES (f(x) = 0 / g(x) = x)
+-------------------------------------------------------------------------------
+
+PIEZA 2.1: Método de Punto Fijo
+- Descripción: Método iterativo para encontrar raíces despejando x de f(x)=0 a x = g(x).
+- Entradas: 
+  * Función despejada: g(x)
+  * Valor inicial: x0
+  * Tolerancia de error: tol
+  * Máximo de iteraciones: max_iter
+- Lógica / Fórmula:
+  * Iteración: x_{i+1} = g(x_i)
+  * Criterio de parada: Error = |x_{i+1} - x_i| <= tol
+- Salida: Tabla de iteraciones [Iteración, x_i, x_{i+1}, Error] y valor de la raíz.
+
+PIEZA 2.2: Método de Bisección
+- Descripción: Método de intervalo (cerrado) que divide sucesivamente a la mitad el rango [a, b].
+- Entradas:
+  * Función: f(x)
+  * Extremo inferior: x0 (o a)
+  * Extremo superior: x1 (o b)
+  * Tolerancia: tol
+  * Máximo de iteraciones: max_iter
+- Lógica / Fórmula:
+  * Número teórico de iteraciones estimado: n = (ln(b - a) - ln(tol)) / ln(2)
+  * Punto medio: x_M = (x0 + x1) / 2
+  * Selección de subintervalo evaluando signo: f(x0) * f(x_M) < 0 -> x1 = x_M; caso contrario x0 = x_M
+  * Criterio de parada: Error = |x1 - x0| <= tol o |f(x_M)| <= tol
+- Salida: Estimación inicial de iteraciones n, tabla [Iter, a, b, x_M, f(x_M), Error] y raíz.
+
+PIEZA 2.3: Método de Regula Falsi (Posición Falsa)
+- Descripción: Método de intervalo que une los puntos (a, f(a)) y (b, f(b)) con una línea recta.
+- Entradas:
+  * Función: f(x)
+  * Puntos del intervalo: x0 (menor) y x1 (mayor)
+  * Tolerancia: tol
+  * Máximo de iteraciones: max_iter
+- Lógica / Fórmula:
+  * Cálculo de la falsa posición: x_M = x1 - [ (x1 - x0) * f(x1) ] / [ f(x1) - f(x0) ]
+  * Evaluación de cambio de signo para actualizar x0 o x1.
+  * Criterio de parada: Error = |x_M_nuevo - x_M_anterior| <= tol
+- Salida: Tabla de iteraciones [Iter, x0, x1, x_M, f(x_M), Error] y raíz aproximada.
+
+PIEZA 2.4: Método de la Secante
+- Descripción: Método abierto que aproxima la derivada mediante la recta secante entre dos puntos.
+- Entradas:
+  * Función: f(x)
+  * Puntos iniciales: x_{n-1} y x_n
+  * Tolerancia: tol
+  * Máximo de iteraciones: max_iter
+- Lógica / Fórmula:
+  * Siguiente punto: x_{n+1} = x_n - [ (x_n - x_{n-1}) * f(x_n) ] / [ f(x_n) - f(x_{n-1}) ]
+  * Actualización de variables: x_{n-1} = x_n, x_n = x_{n+1}
+  * Criterio de parada: Error = |x_{n+1} - x_n| <= tol
+- Salida: Tabla de iteraciones [Iter, x_{n-1}, x_n, f(x_n), x_{n+1}, Error] y raíz.
+
+PIEZA 2.5: Método de Newton-Raphson (1er y 2do Orden - Existentes)
+- 1er Orden: x_{i+1} = x_i - f(x_i) / f'(x_i)
+- 2do Orden: x_{i+1} = x_i - [ f(x_i) * f'(x_i) ] / [ (f'(x_i))^2 - f(x_i) * f''(x_i) ]
+
+-------------------------------------------------------------------------------
+MÓDULO 3: SISTEMAS DE ECUACIONES LINEALES (A * x = b)
+-------------------------------------------------------------------------------
+
+PIEZA 3.1: Eliminación Gaussiana con Pivotaje Parcial
+- Descripción: Método directo para transformar la matriz aumentada [A|b] en matriz triangular superior.
+- Entradas:
+  * Matriz de coeficientes A (n x n)
+  * Vector de términos independientes b (n x 1)
+- Lógica / Algoritmo:
+  1. Para cada columna k (de 0 a n-1):
+     a. Pivotaje Parcial: Buscar el elemento de mayor valor absoluto en la columna k (desde fila k hasta n). Intercambiar filas.
+     b. Eliminación: Para cada fila i > k, calcular multiplicador m_{i,k} = A[i][k] / A[k][k] y restar fila k a la fila i.
+  2. Sustitución hacia atrás para obtener el vector solución x.
+- Salida: Pasos matriciales/operaciones de renglón, Matriz Triangular Superior U y Vector Solución x.
+
+PIEZA 3.2: Método de Gauss-Jordan con Pivotaje Parcial
+- Descripción: Método directo para transformar la matriz aumentada [A|b] directamente en la Matriz Identidad [I|x].
+- Entradas:
+  * Matriz de coeficientes A (n x n)
+  * Vector de términos independientes b (n x 1)
+- Lógica / Algoritmo:
+  1. Para cada columna k:
+     a. Pivotaje Parcial: Seleccionar pivote máximo absoluto e intercambiar filas.
+     b. Normalizar la fila pivote dividiéndola por A[k][k].
+     c. Eliminación en ambas direcciones: Anular elementos por encima (i < k) y por debajo (i > k) del pivote.
+- Salida: Pasos paso a paso de reducción matricial y Vector Solución x directo.
+
+PIEZA 3.3: Método Iterativo de Jacobi
+- Descripción: Método iterativo donde los valores del nuevo vector x^(k+1) se calculan usando ÚNICAMENTE los valores del paso anterior x^(k).
+- Entradas:
+  * Matriz A, Vector b
+  * Vector inicial de aproximación: x^(0) = [0, 0, ..., 0]
+  * Tolerancia de error: tol
+  * Máximo de iteraciones: max_iter
+- Lógica / Despeje:
+  * x_i^(k+1) = (b_i - Suma_{j != i} (A[i][j] * x_j^(k))) / A[i][i]
+  * Cálculo del Vector Diferencia / Norma:
+    d = sqrt( Suma( (x_i^(k+1) - x_i^(k))^2 ) )   o error relativo por componente.
+  * Criterio de parada: Norma d <= tol
+- Salida: Tabla de iteraciones por vector [k, x1, x2, ..., xn, Norma_Error] y vector solución.
+
+PIEZA 3.4: Método Iterativo de Gauss-Seidel
+- Descripción: Método iterativo que actualiza e INSERTA INMEDIATAMENTE los componentes recién calculados dentro de la misma iteración.
+- Entradas:
+  * Matriz A, Vector b
+  * Vector inicial: x^(0)
+  * Tolerancia: tol
+  * Máximo de iteraciones: max_iter
+- Lógica / Despeje:
+  * x_i^(k+1) = (b_i - Suma_{j < i} (A[i][j] * x_j^(k+1)) - Suma_{j > i} (A[i][j] * x_j^(k))) / A[i][i]
+  * Evaluación recursiva de errores por componente:
+    E_{x_i} = | b_i - f_i(x_1, x_2, ..., x_n) |   o  |x_i^(k+1) - x_i^(k)|
+- Salida: Tabla de iteraciones con valores actualizados en tiempo real y verificación de convergencia.
+
+-------------------------------------------------------------------------------
+MÓDULO 4: REQUERIMIENTOS TRANSVERSALES Y EXPORTACIÓN
+-------------------------------------------------------------------------------
+- Modal GeoGebra: Integración iframe para graficación interactiva de funciones y sistemas de ecuaciones.
+- Exportación PDF: Generación de reportes detallados en PDF con tablas de iteraciones y formato académico.
+
+-------------------------------------------------------------------------------
+MÓDULO 5: MÉTODOS SIN SISTEMAS DE ECUACIONES
+-------------------------------------------------------------------------------
+PIEZA 5.1: Interpolación Lineal
+- Descripción: Se trata de encontrar un valor intermedio entre dos o más puntos, en sí interpolar significa 
+	       cuando encuentras datos entre dos puntos conocidos.
+	       Asimismo y en adición, la interpolación lineal es un conjunto de métodos, los cuales son:
+		 🔴 Método Newton Rapson atrás y adelante
+			* Requiere que los datos esten separados por una constante
+			* Solo para interpolar
+			🔺 Atrás
+			   f(xp)=f(x0)+f'(x0)*(P/1!)+f''(x0)*{[P*(P+1)]/2!}+fn(x0)*{[P*(P+1)*(P+n-1]/n!}...
+			   Donde:
+			   xp=x0+P*h
+			   P=(xp-x0)/h
+			   xp=valor dato que se busca interpolar/buscar
+			   x0=ultimo valor tabuldo
+			   h=separación constante entre datos tabulados
+			
+			   Generalmente se te dan los datos en una tabla de dos columnas y n filas
+			   esa tabla le añades las columnas de las derivadas que aparecen en la fórmula
+			   y se deben agregar según se forme una traingular inferior
+
+			   La variante de Rapson hacia atrás busca la triangular inferior y como lo consigue
+			   es primero viendo si hay separación constante entre los datos, eso te da h
+			   luego con esa h y eligiendo xp y x0 según veas los datos ya tienes P
+			   ahora para calcular las derivadas sin su función (Ya que en ejercicios solo
+			   da la tabla) es restando entre el da to de una celda posterior con una anterior poniendolo en la siguiente celda
+ 
+			   se sigue hasta que se forme una triangular inferior y los datos lleguen a tal punto que restados den 0
+			   y a más derivadas más proximo esta el dato buscado.
+			🔺 Delante
+			   Casi lo mismo, solo que busca la triangular superior
+		 🔴 Polinomio de aproximación de lagrange
+		    Este método permite interpolar como extrapolar
+		    Está definido por:
+			g(x)={[(x-x1)(x-x2)...(x-xn)]/[(x0-x1)(x0-x2)...(x0-xn)]}*f0+{[(x-x0)(x-x2)...(x-xn)]/[(x1-x0)(x1-x2)...]}*f1+...
+		    donde:
+			x=valor buscado
+			x0, x1, x2=valor tabulado
+			f0, f1, fn=funciones de xn
